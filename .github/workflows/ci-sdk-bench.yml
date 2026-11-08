@@ -1,0 +1,26 @@
+name: ci-sdk bench
+on:
+  push:
+    branches: [ci-sdk-bench]
+  pull_request:
+    branches: [ci-sdk-bench]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
+        with: { run_install: false }
+      - uses: actions/setup-node@v7
+        with: { node-version: 24.22.1 }
+      - id: ci
+        uses: ./.ci-sdk
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Install ci-sdk
+        run: npm install --prefix "$RUNNER_TEMP/ci-sdk" --no-save --no-audit --no-fund "$PWD/.ci-sdk/ci-sdk.tgz"
+      - name: Bench
+        run: node .ci-sdk/bench.mjs "pnpm build" './packages/**'
