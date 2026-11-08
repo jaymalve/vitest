@@ -1,0 +1,35 @@
+name: ci-sdk
+description: Stop CI repeating work. Restores tool caches and spots code that already passed.
+inputs:
+  pin-file-times:
+    description: "Set each tracked file's modification time from its content, so caches that compare mtimes (such as ESLint's --cache) hit across fresh checkouts. Set to 'false' to keep checkout times."
+    default: 'true'
+outputs:
+  already-passed:
+    description: "'true' when this exact code already passed this job. Add `if: steps.<id>.outputs.already-passed != 'true'` to later steps to skip them."
+    value: ${{ steps.passed.outputs.cache-hit == 'true' }}
+runs:
+  using: composite
+  steps:
+    - id: plan
+      shell: bash
+      env:
+        CI_SDK_JOB: ${{ github.job }}
+        CI_SDK_MATRIX: ${{ toJSON(matrix) }}
+      run: node "${{ github.action_path }}/action/plan.mjs"
+    - if: inputs.pin-file-times != 'false'
+      shell: bash
+      run: node "${{ github.action_path }}/action/mtime.mjs"
+    - id: passed
+      if: steps.plan.outputs.pass_key != ''
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.plan.outputs.pass_path }}
+        key: ${{ steps.plan.outputs.pass_key }}
+        lookup-only: true
+    - if: steps.passed.outputs.cache-hit != 'true'
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.plan.outputs.tools_paths }}
+        key: ${{ steps.plan.outputs.tools_key }}
+        restore-keys: ${{ steps.plan.outputs.tools_restore }}
