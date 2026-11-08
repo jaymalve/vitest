@@ -1,0 +1,4 @@
+{
+  "base": [["build", "pnpm run build"], ["lint", "pnpm exec oxlint --ignore-pattern '.ci-sdk/**'"], ["typecheck", "pnpm run typecheck"], ["test", "CI=true pnpm -r --no-bail --reporter-hide-prefix --stream --filter './test/typescript' --filter './test/unit' --filter './test/workspaces' run test"]],
+  "ci": [["build", "CI_SDK run build --filter './packages/**'"], ["lint", "pnpm exec oxlint --ignore-pattern '.ci-sdk/**'"], ["typecheck", "pnpm run typecheck"], ["test", "CI=true CI_SDK run test --filter './test/typescript' --filter './test/unit' --filter './test/workspaces'"]]
+}
